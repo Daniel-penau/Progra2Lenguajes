@@ -72,6 +72,8 @@ listLargo([H|T],Num,S):- tam(H,X),X =< Num, listLargo(T,Num,S),!.
 
 %----------------------------------------------------------------------------------------------------------------------------
 
+diametro(G,A,X) :- iniciar(G,A,L), maxLar(L,T), listLargo(L,T,X).
+
 %Busca el un camino en un grafo G desde un nodo A hasta un nodo B
 %Su resultado queda en Path
 camino(G,A,B,Path) :-atravesar(G,A,B,[A],Q),reverse(Q,Path).
@@ -107,3 +109,45 @@ eliminaRep(G,L) :- flatten(G,P), sort(P,L).
 %Ejemplo de prueba:
 %eliminaRep([[a,b],[a,e],[c,b],[c,d],[e,d],[d,f],[e,b]],L)
 
+%Dado un grafo, un nodo A y un nodo B, obtiene una lista L con
+%todos los largos de las aristas
+tamanos(G,A,B,L) :- findall(X,largo(G,A,B,X),L).
+%Ejemplo de prueba:
+%
+
+miniList(G,A,B,M):- tamanos(G,A,B,R), min_list(R,M).
+%Ejemplo de prueba:
+%miniList([[a,b],[b,e],[e,g],[g,c],[c,a],[c,d],[d,f],[f,h]],a,h,M) = 4
+%miniList([[a,b],[a,e],[c,b],[c,d],[e,d],[d,f],[e,b]],a,e,M) = 1
+
+indexOf([E|_], E, 0).
+indexOf([_|T], E, I):-indexOf(T, E, I1),
+  I is I1+1.  % and increment the resulting index
+
+pos(G,A,B,P) :- miniList(G,A,B,P1), tamanos(G,A,B,L), 
+    indexOf(L, P1, P).
+
+getItemOnPos(G,[A,B],Path):- pos(G,A,B,E), findall(X,camino(G,A,B,X),L), 
+    nth0(E, L, Path).
+
+%[a,b,c,d]
+
+iniciar(GO,A,R):- findall(X,combino(GO,2,X), L), reverse(GO,GR),
+    findall(Y,combino(GR,2,Y), L1), append(L,L1,LC),
+            iniciarAux(A,LC,R).
+
+%[H|T] es el combino
+iniciarAux(_G,[],_R).
+iniciarAux(G,[H|T],R):- findall(X,getItemOnPos(G,H,X),R1), iniciarAux(G,T,RS), 
+			append(RS,R1,R),!.
+
+combino(_G, 0, []).
+combino([H|T], N, [H|L]):- N>0, N1 is N-1, combino(T, N1, L).
+combino([_H|T], N, L):- N>0, combino(T,N,L).   
+    
+    
+    
+    
+    
+    
+    
