@@ -1,58 +1,24 @@
-maximoSubgrafoBipartito(N,A,R):- soluciones(N,A,L), maxLar(L,Num), listLargo(L,Num,R). 
+maximoSubgrafoBipartito(N,A,L):-findall(X,sol(N,A,X),S),maxLar(S,T),listLargo(S,T,Ls),removeD(Ls,L).
 
-%Funcion que devuelve una solucion de aristas
-conjuntos([],_A,[]):-!.
-conjuntos([N],A,S):- aristas(N,A,L),conjuntos([],A,Ls),append(Ls,L,S),!.
-conjuntos([N|Ns],A,S):-vecinosConN(N,A,V),aristas(N,A,L),removeL(Ns,V,N2),remove(N,A,As),
-    conjuntos(N2,As,Ls),append(Ls,L,S),!.
+sol([],[],[]).
+sol(N,A,X):-conjuntos(N,C),aristas(C,A,X).
 
-%Funcion que devuelve una lista con los vecinos de un nodo mediante las aristas                    
-vecinosConN(_N,[],[]):-!.
-vecinosConN(N,[[N,B]|A],[B|RV]):-vecinosConN(N,A,RV),!.
-vecinosConN(N,[[B,N]|A],[B|RV]):-vecinosConN(N,A,RV),!.
-vecinosConN(N,[_C|A],RV):-vecinosConN(N,A,RV),!.
+conjuntos([],[]).
+conjuntos([H|T],L):-con(S),conjuntos(T,Ls),append(Ls,[[H,S]],L).
 
-%Funcion que guarda las aristas de la solucion
-aristas(_N,[],[]).
-aristas(N,[[N,B]|A],L):-aristas(N,A,RV),append(RV,[[N,B]],L),!.
-aristas(N,[[B,N]|A],L):-aristas(N,A,RV),append(RV,[[B,N]],L),!.
-aristas(N,[_C|A],RV):-aristas(N,A,RV),!.
+con(N):- N is 0.
+con(N):- N is 1.
 
-%Funcion que elimina las aristas que contengan X nodo
-remove(_,[],[]).
-remove(N, [[_X,N]|L], Xs):- remove(N,L,Xs),!.
-remove(N, [[N,_X]|L], Xs):- remove(N,L,Xs),!.   
-remove(N, [X|Xs], [X|Zs]):-remove(N, Xs,Zs).
+aristas(_S,[],[]):-!.
+aristas(S,[[N1,N2]|T],L):- colision(S,[N1,N2],N),N is 5, aristas(S,T,L),!.
+aristas(S,[[N1,N2]|T],L):- colision(S,[N1,N2],N),N is 2, aristas(S,T,Ls),append(Ls,[[N1,N2]],L),!.
 
-%Funcion que elimina los elementos de una lista, de otra lista
-removeL([], _, []).
-removeL([H|T], L2, R):- member(H, L2), !, removeL(T, L2, R). 
-removeL([H|T], L2, [H|R]):- removeL(T, L2, R).
+colision(S,[N1,N2],N):- conjuntoNodo(N1,S,X1),conjuntoNodo(N2,S,X2), X1 is X2, N = 5,!.
+colision(S,[N1,N2],N):- conjuntoNodo(N1,S,X1),conjuntoNodo(N2,S,X2), \+ X1 is  X2, N = 2,!.
 
-%Crea la lista de soluciones posibles
-soluciones(G,A,L):- findall(X,permutar(G,X),Ls), solucion(Ls,A,S),sDup(S,Ps),removeD(Ps,Rs),
-    append(L,[],Rs),!.
-%Funcion aux de soluciones
-solucion([],_A,[]).
-solucion([H|T],A,S):- conjuntos(H,A,L),solucion(T,A,Ls),append(Ls,[L],S),!.
-
-%Funcion para permutar
-permutar([],[]).
-permutar(L,[C|Cola]):- miembro(C,L), quitar(C,L, LMC), permutar(LMC,Cola).
-miembro(E,[E|_H]).
-miembro(E,[_H|T]):- miembro(E,T).
-quitar(E,[E|T],T):-!.
-quitar(E,[H|T],[H|TQ]):- quitar(E,T,TQ).
-quitar(_E,[],[]).
-
-%Funcion para eliminar duplicados
-removeD([],[]).
-removeD([H | T], List):- member(H, T),removeD( T, List),!.
-removeD([H | T], [H|T1]):- \+ member(H, T), removeD( T, T1),!.
-
-%Ordena duplicados
-sDup([],[]).
-sDup([H|T],L):- sort(H,Hs),sDup(T,Ls),append(Ls,[Hs],L).
+conjuntoNodo(_N,[],null):-!.
+conjuntoNodo(N,[[N,Con]|_C], Con):-!.
+conjuntoNodo(N,[_H|T], Con):-conjuntoNodo(N,T,Con).
 
 %Funcion que devuelve el max largo de los elementos de una lista
 maxLar([],R,R):-!.
@@ -69,6 +35,11 @@ tam([_|T],N,R):-N1 is N+1 ,tam(T,N1,R).
 listLargo([],_Num,[]).
 listLargo([H|T],Num,S):- tam(H,X),X >= Num, listLargo(T,Num,Ss),append(Ss,[H],S),!.
 listLargo([H|T],Num,S):- tam(H,X),X =< Num, listLargo(T,Num,S),!. 
+
+%Funcion para eliminar duplicados
+removeD([],[]).
+removeD([H | T], List):- member(H, T),removeD( T, List),!.
+removeD([H | T], [H|T1]):- \+ member(H, T), removeD( T, T1),!.
 
 %----------------------------------------------------------------------------------------------------------------------------
 
